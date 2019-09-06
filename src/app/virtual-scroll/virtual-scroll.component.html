@@ -1,0 +1,8 @@
+<div id="scroller__container">
+  <div #jsScroller class="scroller" (scroll)="handleScroll()">
+    <div #jsScrollerOffset class="scroller__offset">
+      <app-item class="list-row" *ngFor="let item of virtualItems; trackBy: trackByFn;" [item]="item" [id]="item.id"></app-item>
+    </div>
+    <div #jsScrollerSizer class="scroller__sizer" [style.height.px]="sizerHeight"></div>
+  </div>
+</div>
