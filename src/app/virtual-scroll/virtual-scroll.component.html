@@ -6,3 +6,12 @@
     <div #jsScrollerSizer class="scroller__sizer" [style.height.px]="sizerHeight"></div>
   </div>
 </div>
+<div>
+  Insert Index:
+  <div>
+    <input type="number" #insertIndex>
+  </div>
+  <div>
+    <button type="button" (click)="addAt(insertIndex.value)">Add</button>
+  </div>
+</div>

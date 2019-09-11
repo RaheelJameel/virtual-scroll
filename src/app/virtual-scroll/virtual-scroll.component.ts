@@ -3,6 +3,11 @@ import { Item } from '../app.interface';
 
 const OFFSET_COUNT = 10;
 
+export interface RenderedItem {
+  offsetTop: number;
+  item: Item;
+}
+
 @Component({
   selector: 'app-virtual-scroll',
   templateUrl: './virtual-scroll.component.html',
@@ -17,7 +22,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
   @ViewChild('jsScrollerOffset')scrollerOffsetElementRef: ElementRef;
 
   virtualItems: Item[];
-  renderedItems;
+  renderedItems: RenderedItem[];
   sizerHeight: number;
 
   constructor() { }
@@ -27,7 +32,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    const renderedItems: { [index: string]: Item} = {};
+    const renderedItems: RenderedItem[] = [];
     setTimeout(() => {
       const elementCollection = document.getElementsByClassName('list-row');
       const elementArray = Array.from(elementCollection) as HTMLElement[];
@@ -35,12 +40,16 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       // Loop through each of the rendered items, creating an object keyed by each
       // elements offsetTop and storing the element itself as the value.
       elementArray.forEach((element, index) => {
-        renderedItems[element.offsetTop] = this.fullItems[index];
+        renderedItems.push({
+          offsetTop: element.offsetTop,
+          item: this.fullItems[index]
+        });
       });
 
       this.renderedItems = renderedItems;
       // The scrollers height with be the same as the last elements offsetTop
-      this.sizerHeight = parseInt(Object.keys(renderedItems).slice(-1)[0], 10);
+      this.sizerHeight = renderedItems[renderedItems.length - 1].offsetTop;
+      // this.sizerHeight = parseInt(Object.keys(renderedItems).slice(-1)[0], 10);
       this.virtualItems = this.fullItems.slice(0, OFFSET_COUNT);
     });
   }
@@ -60,53 +69,44 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // Create an array containing the offsetTop values of each of the rendered items
-    const rowPositions = Object.keys(this.renderedItems);
     // Find the closest row to our current scroll position
-    const closestRowIndex = this.findClosestNumberIndex(scrollPosition, rowPositions);
+    const closestRowIndex = this.findClosestNumberIndex(scrollPosition, this.renderedItems);
 
     // Find the rows that we need to render using the OFFSET_COUNT buffer
     const start = (closestRowIndex - OFFSET_COUNT) >= 0 ? (closestRowIndex - OFFSET_COUNT) : 0;
-    const end = (closestRowIndex + OFFSET_COUNT) <= rowPositions.length ? (closestRowIndex + OFFSET_COUNT) : rowPositions.length;
-    const indexes = rowPositions.slice(start, end);
-
-    // Hide the rows we don't need to render and show the ones that do need to be rendered
-    const virtualItems: Item[] = []
-    rowPositions.forEach(position => {
-      if (indexes.indexOf(position) === -1) {
-        // $(renderedItems[position]).hide();
-      } else {
-        // $(renderedItems[position]).show();
-        virtualItems.push(this.renderedItems[position]);
-      }
-    });
-    this.virtualItems = virtualItems;
+    const end = (closestRowIndex + OFFSET_COUNT) <= this.renderedItems.length ? (closestRowIndex + OFFSET_COUNT) : this.renderedItems.length;
+    const indexes = this.renderedItems.slice(start, end);
+    this.virtualItems = indexes.map(item => item.item);
 
     // Being to update the offset's Y position once we have rendered at least 10 elements
-    const updatePosition = Math.max(0, closestRowIndex - OFFSET_COUNT) === 0 ? 0 : indexes[0];
+    const updatePosition = Math.max(0, closestRowIndex - OFFSET_COUNT) === 0 ? 0 : indexes[0].offsetTop;
     this.updateOffsetYPosition(updatePosition);
-  };
+  }
 
-   findClosestNumberIndex(numberToFind: number, numbers) {
-    let current = numbers[0];
+   findClosestNumberIndex(numberToFind: number, numbers: RenderedItem[]) {
+    let current = numbers[0].offsetTop;
     let currentIndex = 0;
     let difference = Math.abs(numberToFind - current);
 
     for (let val = 0; val < numbers.length; val++) {
-      const newDifference = Math.abs(numberToFind - numbers[val]);
+      const newDifference = Math.abs(numberToFind - numbers[val].offsetTop);
 
       if (newDifference < difference) {
         difference = newDifference;
-        current = numbers[val];
+        current = numbers[val].offsetTop;
         currentIndex = val;
       }
     }
 
     return currentIndex;
-  };
+  }
 
   updateOffsetYPosition(position) {
     (this.scrollerOffsetElementRef.nativeElement as HTMLElement).style.transform = `translateY(${position}px)`;
-  };
+  }
+
+  addAt(index: number) {
+
+  }
 
 }
