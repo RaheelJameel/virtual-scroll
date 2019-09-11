@@ -13,10 +13,9 @@ export class AppComponent implements OnInit {
   fullItems: Item[];
 
   ngOnInit() {
-    this.fullItems = Array.from({ length: 1000 }).map<Item>((_, i) => ({
+    this.fullItems = Array.from({ length: 50 }).map<Item>((_, i) => ({
       id: this.uuid(),
       name: 'Item',
-      index: i,
       height: (Math.floor(Math.random() * 24) + 1) * 25,
       backgroundColour: i % 2 === 0 ? 'lightcyan' : 'lightgrey'
     }));

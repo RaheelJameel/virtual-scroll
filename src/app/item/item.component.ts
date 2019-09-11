@@ -9,6 +9,7 @@ import { Item } from '../app.interface';
 export class ItemComponent implements OnInit {
 
   @Input() item: Item;
+  @Input() index: number;
 
   constructor() { }
 
