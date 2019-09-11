@@ -17,13 +17,19 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
 
   @Input() fullItems: Item[];
 
-  @ViewChild('jsScroller') scrollerElementRef: ElementRef;
-  @ViewChild('jsScrollerSizer')scrollerSizerElementRef: ElementRef;
-  @ViewChild('jsScrollerOffset')scrollerOffsetElementRef: ElementRef;
+  @ViewChild('jsScroller') scrollerElementRef: ElementRef<HTMLDivElement>;
+  @ViewChild('jsScrollerSizer') scrollerSizerElementRef: ElementRef<HTMLDivElement>;
+  @ViewChild('jsScrollerOffset') scrollerOffsetElementRef: ElementRef<HTMLDivElement>;
+  @ViewChild('testItemComponent') newItemElementRef: ElementRef<HTMLDivElement>;
 
   virtualItems: Item[];
   renderedItems: RenderedItem[];
   sizerHeight: number;
+  seedValue = 0;
+  startIndex = 0;
+  endIndex = OFFSET_COUNT;
+  testItem: Item;
+  newIndex: number;
 
   constructor() { }
 
@@ -50,7 +56,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       // The scrollers height with be the same as the last elements offsetTop
       this.sizerHeight = renderedItems[renderedItems.length - 1].offsetTop;
       // this.sizerHeight = parseInt(Object.keys(renderedItems).slice(-1)[0], 10);
-      this.virtualItems = this.fullItems.slice(0, OFFSET_COUNT);
+      this.virtualItems = this.fullItems.slice(this.startIndex, this.endIndex);
     });
   }
 
@@ -73,9 +79,9 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     const closestRowIndex = this.findClosestNumberIndex(scrollPosition, this.renderedItems);
 
     // Find the rows that we need to render using the OFFSET_COUNT buffer
-    const start = (closestRowIndex - OFFSET_COUNT) >= 0 ? (closestRowIndex - OFFSET_COUNT) : 0;
-    const end = (closestRowIndex + OFFSET_COUNT) <= this.renderedItems.length ? (closestRowIndex + OFFSET_COUNT) : this.renderedItems.length;
-    const indexes = this.renderedItems.slice(start, end);
+    this.startIndex = (closestRowIndex - OFFSET_COUNT) >= 0 ? (closestRowIndex - OFFSET_COUNT) : 0;
+    this.endIndex = (closestRowIndex + OFFSET_COUNT) <= this.renderedItems.length ? (closestRowIndex + OFFSET_COUNT) : this.renderedItems.length;
+    const indexes = this.renderedItems.slice(this.startIndex, this.endIndex);
     this.virtualItems = indexes.map(item => item.item);
 
     // Being to update the offset's Y position once we have rendered at least 10 elements
@@ -105,8 +111,48 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     (this.scrollerOffsetElementRef.nativeElement as HTMLElement).style.transform = `translateY(${position}px)`;
   }
 
-  addAt(index: number) {
+  addAt(inputIndex: string) {
+    const index = parseInt(inputIndex, 10);
+    this.newIndex = index + 1;
+    const newItem = {
+      id: this.uuid(),
+      name: 'Item',
+      height: (Math.floor(Math.random() * 24) + 1) * 25,
+      backgroundColour: 'lightgreen',
+    };
+    this.testItem = newItem;
+    setTimeout(() => {
+      const newHeight = this.newItemElementRef.nativeElement.getBoundingClientRect().height;
+      console.log('newHeight: ', newHeight);
+      this.testItem = null;
+      const nextRenderedItem = this.renderedItems[this.newIndex];
+      const newRenderedItem: RenderedItem = {
+        offsetTop: nextRenderedItem.offsetTop,
+        item: newItem
+      };
+      this.fullItems.splice(this.newIndex, 0, newItem);
+      this.renderedItems.splice(this.newIndex, 0, newRenderedItem);
+      for (let i = this.newIndex + 1; i < this.renderedItems.length; i++) {
+        const oldValue = this.renderedItems[i];
+        this.renderedItems[i] = {
+          ...oldValue,
+          offsetTop: oldValue.offsetTop + newHeight
+        };
+      }
+      const indexes = this.renderedItems.slice(this.startIndex, this.endIndex);
+      this.virtualItems = indexes.map(item => item.item);
+      this.sizerHeight += newHeight;
+    });
+  }
 
+  uuid(): string {
+    if (this.seedValue === 999999) {
+      this.seedValue = 0;
+    }
+    this.seedValue += 1;
+    const time = new Date().getTime().toString();
+    const random = ('00000' + this.seedValue).slice(-6).toString();
+    return time + random;
   }
 
 }
