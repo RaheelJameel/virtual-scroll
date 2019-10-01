@@ -1,0 +1,19 @@
+<div id="scroller__container">
+  <div #jsScroller class="scroller" (scroll)="handleScroll()">
+    <div [style.height.px]="state?.targetHeight">
+
+      <div *ngIf="state?.topPlaceholderHeight" [style.height.px]="state.topPlaceholderHeight"></div>
+
+      <ng-template [ngIf]="middleItems">
+        <app-item *ngFor="let item of middleItems; let i = index; trackBy: trackByFn;" [item]="item" [id]="item.id" [index]="state.firstMiddleItem + i"></app-item>
+      </ng-template>
+
+      <div *ngIf="state?.middlePlaceholderHeight" [style.height.px]="state.middlePlaceholderHeight"></div>
+
+      <ng-template [ngIf]="lastItems">
+        <app-item *ngFor="let item of lastItems; let i = index; trackBy: trackByFn;" [item]="item" [id]="item.id" [index]="fullItems.length - state.lastItemCount + i"></app-item>
+      </ng-template>
+
+    </div>
+  </div>
+</div>
