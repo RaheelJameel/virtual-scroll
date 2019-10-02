@@ -13,10 +13,10 @@ export class AppComponent implements OnInit {
   fullItems: Item[];
 
   ngOnInit() {
-    this.fullItems = Array.from({ length: 40000 }).map<Item>((_, i) => ({
+    this.fullItems = Array.from({ length: 15 }).map<Item>((_, i) => ({
       id: this.uuid(),
       name: 'Item',
-      height: 40 + (Math.floor(Math.random() * 961)),
+      height: 40 + (Math.floor(Math.random() * 261)),
       backgroundColour: i % 2 === 0 ? 'lightcyan' : 'lightgrey'
     }));
   }

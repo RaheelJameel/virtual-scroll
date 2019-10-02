@@ -14,6 +14,7 @@ export class ItemComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
+    console.log('ngOnInit index: ', this.index, ', item: ', this.item);
   }
 
 }

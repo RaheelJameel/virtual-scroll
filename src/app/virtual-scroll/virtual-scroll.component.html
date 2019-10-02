@@ -9,10 +9,22 @@
 <form>
   Insert Index:
   <div>
-    <input type="number" #insertIndex>
+    <input type="number" #insertIndex1>
   </div>
   <div>
-    <button type="submit" (click)="addAt(insertIndex.value)">Add</button>
+    <input type="number" #insertIndex2>
+  </div>
+  <div>
+    <input type="number" #insertIndex3>
+  </div>
+  <div>
+    <input type="number" #insertIndex4>
+  </div>
+  <div>
+    <input type="number" #insertIndex5>
+  </div>
+  <div>
+    <button type="submit" (click)="bulkAddAt(insertIndex1.value,insertIndex2.value,insertIndex3.value,insertIndex4.value,insertIndex5.value);insertIndex1.value=insertIndex2.value=insertIndex3.value=insertIndex4.value=insertIndex5.value = null">Add</button>
   </div>
 </form>
 <div *ngIf="testItem" style="
@@ -20,7 +32,7 @@
     top: -10000px;
     z-index: -1000;
 ">
-<div #testItemComponent>
-  <app-item [item]="testItem" [index]="newIndex"></app-item>
-</div>
+  <div #testItemComponent>
+    <app-item [item]="testItem" [index]="newIndex"></app-item>
+  </div>
 </div>
