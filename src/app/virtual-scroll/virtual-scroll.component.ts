@@ -201,15 +201,12 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       // console.log('copiedArray: ', copiedArray);
       // console.log('copiedArray[1]: ', copiedArray[1]);
       console.log('oldRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
-      console.log('oldRenderedItems[1]: ', JSON.parse(JSON.stringify(this.renderedItems[1])));
       for (
         let renderedItem = this.renderedItems[renderedItemIndex];
         renderedItemIndex < this.renderedItems.length;
         renderedItemIndex++, renderedItem = this.renderedItems[renderedItemIndex]
       ) {
         if (renderedItemIndex === findIndex) {
-          console.log('this.renderedItems[1]: ', this.renderedItems[1]);
-          console.log('renderedItem.offsetTop: ', renderedItem.offsetTop);
           const newRenderedItem: RenderedItem = {
             offsetTop: renderedItem.offsetTop + heightAddition,
             item: additionDifference[diffIndex].value
@@ -219,12 +216,11 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
           diffIndex++;
           findIndex = additionDifference[diffIndex] && additionDifference[diffIndex].index;
         } else {
-          console.log('add: ', heightAddition);
           renderedItem.offsetTop += heightAddition;
         }
       }
       this.virtualItems = newItems.slice(this.startIndex, this.endIndex);
-      console.log('newRenderedItems: ', this.renderedItems);
+      console.log('newRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
     });
   }
 
