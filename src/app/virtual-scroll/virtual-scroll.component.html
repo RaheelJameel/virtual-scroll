@@ -1,5 +1,5 @@
 <div id="scroller__container">
-  <div #jsScroller class="scroller" (scroll)="handleScroll()">
+  <div #jsScroller class="scroller" (scroll)="onScroll()">
     <div #jsScrollerOffset class="scroller__offset">
       <app-item class="list-row" *ngFor="let item of virtualItems; let i = index; trackBy: trackByFn;" [item]="item" [id]="item.id" [index]="startIndex + i"></app-item>
     </div>

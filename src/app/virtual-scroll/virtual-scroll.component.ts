@@ -31,6 +31,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
   endIndex = OFFSET_COUNT;
   testItem: Item;
   newIndex: number;
+  ignoreScroll: boolean;
 
   constructor() { }
 
@@ -66,9 +67,17 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     return item.id;
   }
 
+  onScroll() {
+    // console.log('onScroll');
+    if (!this.ignoreScroll) {
+      this.handleScroll();
+    }
+  }
+
   handleScroll() {
     // Get the user's current scroll position
     const scrollPosition = (this.scrollerElementRef.nativeElement as HTMLElement).scrollTop;
+    console.log('handleScroll: scrollPosition: ', scrollPosition);
 
     // If we are already at the bottom of the list then don't do anything else
     if (scrollPosition >= this.sizerHeight) {
@@ -83,13 +92,13 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     // Find the rows that we need to render using the OFFSET_COUNT buffer
     this.startIndex = (closestRowIndex - OFFSET_COUNT) >= 0 ? (closestRowIndex - OFFSET_COUNT) : 0;
     this.endIndex = (closestRowIndex + OFFSET_COUNT) <= this.renderedItems.length ? (closestRowIndex + OFFSET_COUNT) : this.renderedItems.length;
-    console.log('closestRowIndex: ', closestRowIndex, ', startIndex: ', this.startIndex, ', endIndex: ', this.endIndex);
+    // console.log('closestRowIndex: ', closestRowIndex, ', startIndex: ', this.startIndex, ', endIndex: ', this.endIndex);
     const indexes = this.renderedItems.slice(this.startIndex, this.endIndex);
     this.virtualItems = indexes.map(item => item.item);
 
     // Being to update the offset's Y position once we have rendered at least 10 elements
     const updatePosition = Math.max(0, closestRowIndex - OFFSET_COUNT) === 0 ? 0 : indexes[0].offsetTop;
-    console.log('updatePosition: ', updatePosition);
+    // console.log('updatePosition: ', updatePosition);
     this.updateOffsetYPosition(updatePosition);
   }
 
@@ -116,20 +125,22 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
   }
 
   bulkAddAt(...indexes: string[]) {
-    console.log('oldItems: ', this.fullItems);
+    // console.log('oldItems: ', this.fullItems);
     indexes.forEach((indexString) => {
       if (indexString) {
         const index = parseInt(indexString, 10);
         const newItem = {
           id: this.uuid(),
           name: 'Item',
-          height: (Math.floor(Math.random() * 24) + 1) * 25,
+          height: 40 + (Math.floor(Math.random() * 261)),
+          // height: 100,
           backgroundColour: 'lightgreen',
         };
+        // console.log('bulkAddAt: index: ', index, ', item: ', newItem);
         this.inputItems.splice(index, 0, newItem);
       }
     });
-    console.log('newItems: ', this.inputItems);
+    // console.log('newItems: ', this.inputItems);
     this.onDataChange(this.fullItems, this.inputItems);
   }
 
@@ -149,7 +160,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       const elementArray = Array.from(elementCollection) as HTMLElement[];
       const newHeight = elementArray[elementArray.length - 1].getBoundingClientRect().height;
       // const newHeight = this.newItemElementRef.nativeElement.getBoundingClientRect().height;
-      console.log('newHeight: ', newHeight);
+      // console.log('newHeight: ', newHeight);
       const nextRenderedItem = this.renderedItems[this.newIndex];
       const newRenderedItem: RenderedItem = {
         offsetTop: nextRenderedItem.offsetTop,
@@ -183,9 +194,18 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
   }
 
   onDataChange(oldItems: Item[], newItems: Item[]) {
+    // Get the user's current scroll position
+    const scrollPosition = (this.scrollerElementRef.nativeElement as HTMLElement).scrollTop;
+    // console.log('onDataChange: scrollPosition: ', scrollPosition);
+    // Find the closest row to our current scroll position
+    const closestRowIndex = this.findClosestNumberIndex(scrollPosition, this.renderedItems);
+    // console.log('closestRowIndex: ', closestRowIndex, ', startIndex: ', this.startIndex, ', endIndex: ', this.endIndex);
+
+
     // Find the newly added Items
     const additionDifference = this.differenceAdvanced(oldItems, newItems);
     const addedItems: Item[] = additionDifference.map(diff => diff.value);
+    // console.log('addedItems: ', JSON.parse(JSON.stringify(addedItems)));
     // Render these new Items in the end of the array
     this.virtualItems = this.virtualItems.concat(addedItems);
     // Wait a tick for Angular to render the items
@@ -202,7 +222,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       let findIndex = additionDifference[diffIndex].index;
       let heightAddition = 0;
       let renderedItemIndex = 0;
-      console.log('oldRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
+      // console.log('oldRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
       for (
         let renderedItem = this.renderedItems[renderedItemIndex];
         renderedItemIndex < this.renderedItems.length;
@@ -221,8 +241,32 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
           renderedItem.offsetTop += heightAddition;
         }
       }
+      // console.log('Change virtualItems');
+      // this.ignoreScroll = true;
+      // console.log('newRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
+      // console.log('oldVirtualItems: ', JSON.parse(JSON.stringify(this.virtualItems)));
       this.virtualItems = newItems.slice(this.startIndex, this.endIndex);
-      console.log('newRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
+      // console.log('newVirtualItems: ', JSON.parse(JSON.stringify(this.virtualItems)));
+      this.fullItems = Array.from(newItems);
+
+      // The scrollers height with be the same as the last elements offsetTop
+      this.sizerHeight = this.renderedItems[this.renderedItems.length - 1].offsetTop;
+
+      // Being to update the offset's Y position once we have rendered at least 10 elements
+      const updatePosition = Math.max(0, closestRowIndex - OFFSET_COUNT) === 0 ? 0 : this.renderedItems[this.startIndex].offsetTop;
+      // console.log('updatePosition: ', updatePosition);
+      // this.updateOffsetYPosition(updatePosition);
+
+      console.log('Work Done');
+      setTimeout(() => {
+        console.log('changing scroll position');
+        (this.scrollerElementRef.nativeElement as HTMLElement).scrollTo({ top: scrollPosition });
+        setTimeout(() => {
+          // console.log('unset ignoreScroll');
+          // this.ignoreScroll = false;
+          // (this.scrollerElementRef.nativeElement as HTMLElement).scrollTo({ top: scrollPosition });
+        });
+      });
     });
   }
 
