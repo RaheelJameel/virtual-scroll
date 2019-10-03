@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { Item } from '../app.interface';
 
 @Component({
@@ -6,7 +6,7 @@ import { Item } from '../app.interface';
   templateUrl: './item.component.html',
   styleUrls: ['./item.component.scss']
 })
-export class ItemComponent implements OnInit {
+export class ItemComponent implements OnInit, OnDestroy {
 
   @Input() item: Item;
   @Input() index: number;
@@ -14,7 +14,11 @@ export class ItemComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
-    console.log('ngOnInit index: ', this.index, ', item: ', this.item);
+    // console.log('ngOnInit index: ', this.index, ', item: ', this.item);
+  }
+
+  ngOnDestroy() {
+    // console.log('ngOnDestroy index: ', this.index, ', item: ', this.item);
   }
 
 }

@@ -83,11 +83,13 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     // Find the rows that we need to render using the OFFSET_COUNT buffer
     this.startIndex = (closestRowIndex - OFFSET_COUNT) >= 0 ? (closestRowIndex - OFFSET_COUNT) : 0;
     this.endIndex = (closestRowIndex + OFFSET_COUNT) <= this.renderedItems.length ? (closestRowIndex + OFFSET_COUNT) : this.renderedItems.length;
+    console.log('closestRowIndex: ', closestRowIndex, ', startIndex: ', this.startIndex, ', endIndex: ', this.endIndex);
     const indexes = this.renderedItems.slice(this.startIndex, this.endIndex);
     this.virtualItems = indexes.map(item => item.item);
 
     // Being to update the offset's Y position once we have rendered at least 10 elements
     const updatePosition = Math.max(0, closestRowIndex - OFFSET_COUNT) === 0 ? 0 : indexes[0].offsetTop;
+    console.log('updatePosition: ', updatePosition);
     this.updateOffsetYPosition(updatePosition);
   }
 
@@ -181,13 +183,17 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
   }
 
   onDataChange(oldItems: Item[], newItems: Item[]) {
+    // Find the newly added Items
     const additionDifference = this.differenceAdvanced(oldItems, newItems);
     const addedItems: Item[] = additionDifference.map(diff => diff.value);
+    // Render these new Items in the end of the array
     this.virtualItems = this.virtualItems.concat(addedItems);
+    // Wait a tick for Angular to render the items
     setTimeout(() => {
       const elementCollection = document.getElementsByClassName('list-row');
       const elementArray = Array.from(elementCollection) as HTMLElement[];
       const addedItemElements = elementArray.slice(elementArray.length - addedItems.length);
+      // Get the heights of the newly rendered items
       additionDifference.forEach((diff, index) => {
         diff.height = addedItemElements[index].getBoundingClientRect().height;
       });
@@ -196,10 +202,6 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       let findIndex = additionDifference[diffIndex].index;
       let heightAddition = 0;
       let renderedItemIndex = 0;
-      // this.renderedItems.forEach((renderedItem, renderedItemIndex) => {
-      // const copiedArray = Array.from(this.renderedItems);
-      // console.log('copiedArray: ', copiedArray);
-      // console.log('copiedArray[1]: ', copiedArray[1]);
       console.log('oldRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
       for (
         let renderedItem = this.renderedItems[renderedItemIndex];
