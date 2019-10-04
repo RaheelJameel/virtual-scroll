@@ -27,6 +27,27 @@
     <button type="submit" (click)="bulkAddAt(insertIndex1.value,insertIndex2.value,insertIndex3.value,insertIndex4.value,insertIndex5.value);insertIndex1.value=insertIndex2.value=insertIndex3.value=insertIndex4.value=insertIndex5.value = null">Add</button>
   </div>
 </form>
+<form>
+  Remove Index:
+  <div>
+    <input type="number" #removeIndex1>
+  </div>
+  <div>
+    <input type="number" #removeIndex2>
+  </div>
+  <div>
+    <input type="number" #removeIndex3>
+  </div>
+  <div>
+    <input type="number" #removeIndex4>
+  </div>
+  <div>
+    <input type="number" #removeIndex5>
+  </div>
+  <div>
+    <button type="submit" (click)="bulkRemoveAt(removeIndex1.value,removeIndex2.value,removeIndex3.value,removeIndex4.value,removeIndex5.value);removeIndex1.value=removeIndex2.value=removeIndex3.value=removeIndex4.value=removeIndex5.value = null">Add</button>
+  </div>
+</form>
 <div *ngIf="testItem" style="
     position: absolute;
     top: -10000px;
