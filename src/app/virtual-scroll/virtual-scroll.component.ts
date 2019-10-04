@@ -5,6 +5,7 @@ const OFFSET_COUNT = 10;
 
 export interface RenderedItem {
   offsetTop: number;
+  height: number;
   item: Item;
 }
 
@@ -51,6 +52,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       elementArray.forEach((element, index) => {
         renderedItems.push({
           offsetTop: element.offsetTop,
+          height: element.getBoundingClientRect().height,
           item: this.fullItems[index]
         });
       });
@@ -144,45 +146,6 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     this.onDataChange(this.fullItems, this.inputItems);
   }
 
-  addAt(inputIndex: string) {
-    const index = parseInt(inputIndex, 10);
-    this.newIndex = index + 1;
-    const newItem = {
-      id: this.uuid(),
-      name: 'Item',
-      height: (Math.floor(Math.random() * 24) + 1) * 25,
-      backgroundColour: 'lightgreen',
-    };
-    this.virtualItems.push(newItem);
-    // this.testItem = newItem;
-    setTimeout(() => {
-      const elementCollection = document.getElementsByClassName('list-row');
-      const elementArray = Array.from(elementCollection) as HTMLElement[];
-      const newHeight = elementArray[elementArray.length - 1].getBoundingClientRect().height;
-      // const newHeight = this.newItemElementRef.nativeElement.getBoundingClientRect().height;
-      // console.log('newHeight: ', newHeight);
-      const nextRenderedItem = this.renderedItems[this.newIndex];
-      const newRenderedItem: RenderedItem = {
-        offsetTop: nextRenderedItem.offsetTop,
-        item: newItem
-      };
-      const newFullItems = Array.from(this.fullItems);
-      newFullItems.splice(this.newIndex, 0, newItem);
-      this.fullItems = newFullItems;
-      this.renderedItems.splice(this.newIndex, 0, newRenderedItem);
-      for (let i = this.newIndex + 1; i < this.renderedItems.length; i++) {
-        const oldValue = this.renderedItems[i];
-        this.renderedItems[i] = {
-          ...oldValue,
-          offsetTop: oldValue.offsetTop + newHeight
-        };
-      }
-      const indexes = this.renderedItems.slice(this.startIndex, this.endIndex);
-      this.virtualItems = indexes.map(item => item.item);
-      this.sizerHeight += newHeight;
-    });
-  }
-
   uuid(): string {
     if (this.seedValue === 999999) {
       this.seedValue = 0;
@@ -193,19 +156,39 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     return time + random;
   }
 
+  bulkRemoveAt(...indexes: string[]) {
+    indexes.forEach((indexString) => {
+      if (indexString) {
+        const index = parseInt(indexString, 10);
+        this.inputItems.splice(index, 1);
+      }
+    });
+    this.onDataChange(this.fullItems, this.inputItems);
+  }
+
   onDataChange(oldItems: Item[], newItems: Item[]) {
+    // Find the newly added Items
+    console.log('oldRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
+    const additionDifference = this.differenceAdvanced(oldItems, newItems);
+    if (additionDifference.length) {
+      this.handleAddChange(additionDifference, newItems);
+    } else {
+      const deletionDifference = this.differenceAdvanced(newItems, oldItems);
+      if (deletionDifference.length) {
+        this.handleDeleteChange(deletionDifference, oldItems, newItems);
+      }
+    }
+    console.log('newRenderedItems: ', JSON.parse(JSON.stringify(this.renderedItems)));
+  }
+
+  handleAddChange(additionDifference: any[], newItems: Item[]) {
+    const addedItems: Item[] = additionDifference.map(diff => diff.value);
+    // console.log('addedItems: ', JSON.parse(JSON.stringify(addedItems)));
+
     // Get the user's current scroll position
     const scrollPosition = (this.scrollerElementRef.nativeElement as HTMLElement).scrollTop;
     // console.log('onDataChange: scrollPosition: ', scrollPosition);
-    // Find the closest row to our current scroll position
-    const closestRowIndex = this.findClosestNumberIndex(scrollPosition, this.renderedItems);
-    // console.log('closestRowIndex: ', closestRowIndex, ', startIndex: ', this.startIndex, ', endIndex: ', this.endIndex);
 
-
-    // Find the newly added Items
-    const additionDifference = this.differenceAdvanced(oldItems, newItems);
-    const addedItems: Item[] = additionDifference.map(diff => diff.value);
-    // console.log('addedItems: ', JSON.parse(JSON.stringify(addedItems)));
     // Render these new Items in the end of the array
     this.virtualItems = this.virtualItems.concat(addedItems);
     // Wait a tick for Angular to render the items
@@ -231,6 +214,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
         if (renderedItemIndex === findIndex) {
           const newRenderedItem: RenderedItem = {
             offsetTop: renderedItem.offsetTop + heightAddition,
+            height: additionDifference[diffIndex].height,
             item: additionDifference[diffIndex].value
           };
           this.renderedItems.splice(renderedItemIndex, 0, newRenderedItem);
@@ -252,9 +236,6 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       // The scrollers height with be the same as the last elements offsetTop
       this.sizerHeight = this.renderedItems[this.renderedItems.length - 1].offsetTop;
 
-      // Being to update the offset's Y position once we have rendered at least 10 elements
-      const updatePosition = Math.max(0, closestRowIndex - OFFSET_COUNT) === 0 ? 0 : this.renderedItems[this.startIndex].offsetTop;
-      // console.log('updatePosition: ', updatePosition);
       // this.updateOffsetYPosition(updatePosition);
 
       console.log('Work Done');
@@ -267,6 +248,44 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
           // (this.scrollerElementRef.nativeElement as HTMLElement).scrollTo({ top: scrollPosition });
         });
       });
+    });
+  }
+
+  handleDeleteChange(deletionDifference: any[], oldItems: Item[], newItems: Item[]) {
+    let diffIndex = 0;
+    let findIndex = deletionDifference[diffIndex] && deletionDifference[diffIndex].index;
+    let heightSubtraction = 0;
+    // Following loop is not a simple for loop, as the array being iterated is being mutated in the loop
+    // tslint:disable-next-line: prefer-for-of
+    for (
+      let index = 0, renderedItem = this.renderedItems[index];
+      index < this.renderedItems.length;
+      index++, renderedItem = this.renderedItems[index]
+    ) {
+      if (index === findIndex) {
+        heightSubtraction += renderedItem.height;
+        this.renderedItems.splice(index, 1);
+        index--;
+        diffIndex++;
+        findIndex = deletionDifference[diffIndex] && deletionDifference[diffIndex].index;
+      } else {
+        console.log('Abc: renderedItem.offsetTop: ', renderedItem.offsetTop, ', heightSubtraction: ', heightSubtraction);
+        renderedItem.offsetTop -= heightSubtraction;
+      }
+    }
+
+    // Get the user's current scroll position
+    const scrollPosition = (this.scrollerElementRef.nativeElement as HTMLElement).scrollTop;
+
+    this.virtualItems = newItems.slice(this.startIndex, this.endIndex);
+    // console.log('newVirtualItems: ', JSON.parse(JSON.stringify(this.virtualItems)));
+    this.fullItems = Array.from(newItems);
+    // The scrollers height with be the same as the last elements offsetTop
+    this.sizerHeight = this.renderedItems[this.renderedItems.length - 1].offsetTop;
+
+    setTimeout(() => {
+      console.log('changing scroll position');
+      (this.scrollerElementRef.nativeElement as HTMLElement).scrollTo({ top: scrollPosition });
     });
   }
 
