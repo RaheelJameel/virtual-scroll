@@ -4,3 +4,11 @@
   border: solid #db18ec 1px;
   position: relative;
 }
+
+.scroller__sizer {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100px;
+  opacity: 0;
+}
