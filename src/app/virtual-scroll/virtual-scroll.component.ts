@@ -26,13 +26,15 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
   fullItems: Item[];
   virtualItems: Item[];
   renderedItems: RenderedItem[];
-  sizerHeight: number;
+  maxYOffset: number;
+  scrollHeight: number;
   seedValue = 0;
   startIndex = 0;
   endIndex = OFFSET_COUNT;
   testItem: Item;
   newIndex: number;
   ignoreScroll: boolean;
+  scrollDisabled: boolean;
 
   constructor() { }
 
@@ -59,7 +61,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
 
       this.renderedItems = renderedItems;
       // The scrollers height with be the same as the last elements offsetTop
-      this.sizerHeight = renderedItems[renderedItems.length - 1].offsetTop;
+      this.setScrollHeight();
       // this.sizerHeight = parseInt(Object.keys(renderedItems).slice(-1)[0], 10);
       this.virtualItems = this.fullItems.slice(this.startIndex, this.endIndex);
     });
@@ -71,7 +73,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
 
   onScroll() {
     // console.log('onScroll');
-    if (!this.ignoreScroll) {
+    if (!this.scrollDisabled && !this.ignoreScroll) {
       this.handleScroll();
     }
   }
@@ -82,9 +84,9 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     console.log('handleScroll: scrollPosition: ', scrollPosition);
 
     // If we are already at the bottom of the list then don't do anything else
-    if (scrollPosition >= this.sizerHeight) {
+    if (scrollPosition >= this.maxYOffset) {
       // Ensure the offset does not exceed the scroller__sizer height
-      this.updateOffsetYPosition(this.sizerHeight);
+      this.updateOffsetYPosition(this.maxYOffset);
       return;
     }
 
@@ -118,7 +120,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
         currentIndex = val;
       }
     }
-
+    console.log('this.renderedItems: ', this.renderedItems);
     return currentIndex;
   }
 
@@ -234,7 +236,7 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
       this.fullItems = Array.from(newItems);
 
       // The scrollers height with be the same as the last elements offsetTop
-      this.sizerHeight = this.renderedItems[this.renderedItems.length - 1].offsetTop;
+      this.setScrollHeight();
 
       // this.updateOffsetYPosition(updatePosition);
 
@@ -281,12 +283,23 @@ export class VirtualScrollComponent implements OnInit, AfterViewInit {
     // console.log('newVirtualItems: ', JSON.parse(JSON.stringify(this.virtualItems)));
     this.fullItems = Array.from(newItems);
     // The scrollers height with be the same as the last elements offsetTop
-    this.sizerHeight = this.renderedItems[this.renderedItems.length - 1].offsetTop;
+    this.setScrollHeight();
 
     setTimeout(() => {
       console.log('changing scroll position');
       (this.scrollerElementRef.nativeElement as HTMLElement).scrollTo({ top: scrollPosition });
     });
+  }
+
+  setScrollHeight() {
+    const lastItem = this.renderedItems[this.renderedItems.length - 1];
+    this.maxYOffset = lastItem.offsetTop;
+    // The scroll's height with be the same as the last elements offsetTop plus it's height
+    this.scrollHeight = this.maxYOffset + lastItem.height;
+  }
+
+  toggleScrollAllowed() {
+    this.scrollDisabled = !this.scrollDisabled;
   }
 
   /**
