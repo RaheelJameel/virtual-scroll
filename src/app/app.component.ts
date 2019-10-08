@@ -13,6 +13,7 @@ export class AppComponent implements OnInit {
   fullItems: Item[];
 
   ngOnInit() {
+    // Create Input Items for the Scroll
     this.fullItems = Array.from({ length: 1000 }).map<Item>((_, i) => ({
       id: this.uuid(),
       name: 'Item',
